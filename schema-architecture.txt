@@ -1,0 +1,20 @@
+===================================================================
+                       SCHEMA DE L'ARCHITECTURE
+===================================================================
+
+               +-------------------------------------------+
+               |                HÔTE DOCKER                |
+               |                                           |
+  Client Web ----> [ Port 80 ] ---> ( Frontend Container )  |
+ (Navigateur)  |                           |               |
+               |                     internal_net          |
+               |                           v               |
+               |                   ( Backend Container )   |
+               |                           ^               |
+ Client Jeu  ----> [ Port 7777 ] -> ( GameServer Container)|
+               +-------------------------------------------+
+
+Détails des conteneurs :
+- Frontend : Nginx listening on 8080 (Mapped to Host:80)
+- Backend  : Node.js / Express listening on 5000
+- GameServer: Netcat TCP listening on 7777 (Mapped to Host:7777)
