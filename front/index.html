@@ -7,5 +7,21 @@
 <body>
     <h1>Bienvenue sur Docker Cloud</h1>
     <p>Frontend opérationnel running on Nginx.</p>
+
+    <button onclick="appelerApi()">Appeler le backend</button>
+    <p id="reponse">Pas encore de réponse.</p>
+
+    <script>
+        async function appelerApi() {
+            try {
+                const res = await fetch('/api');
+                const data = await res.json();
+                document.getElementById('reponse').textContent =
+                    data.status + ' - ' + data.message;
+            } catch (e) {
+                document.getElementById('reponse').textContent = 'Erreur : ' + e;
+            }
+        }
+    </script>
 </body>
 </html>

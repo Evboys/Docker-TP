@@ -1,20 +1,33 @@
 ===================================================================
-                       SCHEMA DE L'ARCHITECTURE
+                  SCHEMA DE L'ARCHITECTURE (v2)
 ===================================================================
 
-               +-------------------------------------------+
-               |                HÔTE DOCKER                |
-               |                                           |
-  Client Web ----> [ Port 80 ] ---> ( Frontend Container )  |
- (Navigateur)  |                           |               |
-               |                     internal_net          |
-               |                           v               |
-               |                   ( Backend Container )   |
-               |                           ^               |
- Client Jeu  ----> [ Port 7777 ] -> ( GameServer Container)|
-               +-------------------------------------------+
+ Internet / Navigateur
+        |
+        |  HTTP + WebSocket  (seul port publié : hôte 80 -> 8080)
+        v
+ +--------------------------------------------------------------+
+ |                         HÔTE DOCKER                          |
+ |                                                              |
+ |   +----------------------+                                   |
+ |   |  cloud_frontend      |  volume: front_logs (/var/log/nginx)
+ |   |  Nginx :8080         |                                   |
+ |   |  0.25 CPU / 128 Mo   |                                   |
+ |   +----------+-----------+                                   |
+ |              |  front_net (bridge)                           |
+ |   +----------v-----------+                                   |
+ |   |  cloud_backend       |  AUCUN port publié                |
+ |   |  Node/Express :5000  |                                   |
+ |   |  0.50 CPU / 256 Mo   |                                   |
+ |   +----------+-----------+                                   |
+ |              |  back_net (bridge, internal: true)            |
+ |   +----------v-----------+                                   |
+ |   |  cloud_gameserver    |  volume: game_data (/data)        |
+ |   |  socat + bash :7777  |  AUCUN port publié                |
+ |   |  1.00 CPU / 512 Mo   |                                   |
+ |   +----------------------+                                   |
+ +--------------------------------------------------------------+
 
-Détails des conteneurs :
-- Frontend : Nginx listening on 8080 (Mapped to Host:80)
-- Backend  : Node.js / Express listening on 5000
-- GameServer: Netcat TCP listening on 7777 (Mapped to Host:7777)
+ Ordre de démarrage : game_server -> backend -> frontend
+ (depends_on + healthcheck)
+ Config : fichier .env -> ${VAR} dans docker-compose.yml -> environment:

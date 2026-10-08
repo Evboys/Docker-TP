@@ -1,17 +1,19 @@
 FROM alpine:3.19
 
-# Installation de Netcat (nc) et Bash pour écouter sur un port TCP
-RUN apk add --no-cache netcat-openbsd bash
+# bash = scripts ; socat = serveur TCP multi-connexions ; netcat-openbsd = healthcheck (nc -z)
+RUN apk add --no-cache bash socat netcat-openbsd
 
+# Utilisateur sans privilèges
+RUN adduser -D -u 1000 gameuser
+
+# Scripts du jeu
 WORKDIR /game
-COPY server.sh /game/server.sh
-RUN chmod +x /game/server.sh
+COPY server.sh handler.sh ./
+RUN chmod +x /game/server.sh /game/handler.sh
 
-# Création d'un utilisateur dédié
-RUN adduser -D -u 1001 gameuser
+RUN mkdir -p /data && chown gameuser:gameuser /data
+
 USER gameuser
-
 EXPOSE 7777
 
-# Utilisation de exec dans un script shell pour intercepter SIGTERM
 ENTRYPOINT ["/game/server.sh"]
