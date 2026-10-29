@@ -1,13 +1,10 @@
 # Version du format Compose
-version: '3.8'
-
 services:
   # BACKEND : API Node.js/Express + pont WebSocket -> TCP vers le game server
   backend:
     build:
       context: ./back              # dossier contenant le Dockerfile du back
       dockerfile: Dockerfile
-    container_name: cloud_backend
     environment:                   # variables injectées depuis .env
       - PORT=${BACKEND_PORT}
       - NODE_ENV=${NODE_ENV}
@@ -96,6 +93,53 @@ services:
       retries: 3
     stop_signal: SIGTERM
     stop_grace_period: 15s
+
+# --- CONSIGNE SUPPLEMENTAIRE : CI/CD (Lint) ---
+  # Ce conteneur éphémère vérifie la syntaxe des scripts bash avant même que les services démarrent.
+  ci_lint:
+    image: alpine:3.19
+    container_name: ci_lint
+    command: /bin/sh -c "apk add --no-cache shellcheck && shellcheck /src/front/entrypoint.sh /src/gameserver/server.sh /src/gameserver/handler.sh"
+    volumes:
+      - .:/src:ro
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: '64M'
+
+  # --- CONSIGNE SUPPLEMENTAIRE : CI/CD (Test) ---
+  # Ce conteneur éphémère vérifie que le frontend répond bien en HTTP 200 une fois démarré.
+  ci_test:
+    image: alpine:3.19
+    container_name: ci_test
+    command: /bin/sh -c "apk add --no-cache curl && echo 'Test du Frontend...' && curl -s -o /dev/null -w '%{http_code}' http://frontend:8080 | grep 200 && echo 'Test OK' || (echo 'Echec du test' && exit 1)"
+    networks:
+      - front_net
+    depends_on:
+      frontend:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: '64M'
+
+# --- CONSIGNE SUPPLÉMENTAIRE : Scaling ---
+  autoscaler:
+    build:
+      context: ./scaler
+      dockerfile: Dockerfile
+    container_name: cloud_autoscaler
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Accès au démon Docker hôte
+      - .:/src:ro # Accès au docker-compose.yml
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: '64M'
+    restart: unless-stopped
 
 # RÉSEAUX : segmentation pour sécuriser les ports
 networks:

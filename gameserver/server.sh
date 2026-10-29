@@ -4,7 +4,7 @@
 PORT=${GAMESERVER_PORT:-7777}
 
 echo "Game Server démarré sur le port $PORT..."
-socat TCP-LISTEN:$PORT,fork,reuseaddr EXEC:/game/handler.sh &
+socat TCP-LISTEN:"$PORT",fork,reuseaddr EXEC:/game/handler.sh &
 SOCAT_PID=$!
 
 # Arrêt propre sur SIGTERM/SIGINT

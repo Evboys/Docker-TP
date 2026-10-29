@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck disable=SC2016
 # Génère la conf finale depuis le template en injectant les variables d'environnement
 envsubst '${BACKEND_HOST} ${BACKEND_PORT}' \
   < /etc/nginx/nginx.conf.template > /tmp/nginx.conf

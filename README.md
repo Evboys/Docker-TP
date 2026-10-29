@@ -51,3 +51,11 @@ L'utilisation de `stop_signal: SIGTERM` combinée à la forme "Exec" des `ENTRYP
 | **Poids des images** | Plusieurs Gigaoctets (GB) | Quelques Mégaoctets (MB) |
 | **Temps de démarrage**| Plusieurs minutes | Quelques millisecondes |
 | **Consommation** | Empreinte mémoire et CPU élevée | Légère, partage des ressources de l'hôte |
+
+## 4. Consigne supplémentaire : Intégration CI/CD et Auto-scaling
+
+La stack inclut 3 conteneurs complémentaires personnalisés basés sur Alpine :
+
+1. **`ci_lint` (Linting) :** Analyse statique des scripts Shell du projet via `shellcheck` au démarrage.
+2. **`ci_test` (Test) :** Effectue une requête HTTP `curl` sur le Frontend pour s'assurer que le code de retour est 200 OK.
+3. **`autoscaler` (Scaling) :** Conteneur en tâche de fond qui monte le socket Docker `/var/run/docker.sock`. Il surveille la consommation CPU globale du cluster `cloud_backend` et ajuste dynamiquement le nombre de réplicas entre 1 et 5 instances selon la charge.
